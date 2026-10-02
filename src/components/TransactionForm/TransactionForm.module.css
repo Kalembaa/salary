@@ -1,0 +1,21 @@
+.form { display: flex; flex-direction: column; gap: var(--spacing-lg); width: 100%; }
+.typeSelector { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--spacing-sm); }
+.typeButton { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 var(--spacing-md); font-size: 14px; font-weight: 600; color: var(--color-text-secondary); background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius-small); transition: var(--transition-fast); }
+.typeButton:hover { color: var(--color-primary); border-color: var(--color-primary); }
+.typeButtonActive, .typeButtonActive:hover { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--spacing-md); }
+.field { display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.fullWidth { grid-column: 1/-1; }
+.label { font-size: 13px; font-weight: 600; }
+.required, .error { color: var(--color-expense); }
+.input,.select,.textarea { width: 100%; padding: 10px 12px; font-size: 14px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-small); }
+.input,.select { min-height: 44px; }
+.textarea { min-height: 100px; line-height: 1.5; resize: vertical; }
+.input:focus,.select:focus,.textarea:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+.error { margin: 0; font-size: 12px; }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-sm); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border); }
+.cancelButton,.submitButton { min-height: 42px; padding: 0 18px; font-size: 14px; font-weight: 600; border-radius: var(--radius-small); }
+.cancelButton { color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); }
+.submitButton { color: #fff; background: var(--color-primary); border: 1px solid var(--color-primary); }
+.submitButton:hover { background: var(--color-primary-hover); }
+@media(max-width:600px){.grid{grid-template-columns:1fr}.fullWidth{grid-column:auto}.actions{flex-direction:column-reverse}.cancelButton,.submitButton{width:100%}}

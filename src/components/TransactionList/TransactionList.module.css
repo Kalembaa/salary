@@ -1,0 +1,22 @@
+.wrapper { width: 100%; overflow-x: auto; }
+.table { width: 100%; min-width: 720px; border-collapse: collapse; }
+.header { background: var(--color-background); }
+.headerCell { padding: 14px 16px; font-size: 12px; font-weight: 700; text-align: left; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); }
+.headerCellAmount { text-align: right; }
+.headerCellActions { width: 110px; text-align: right; }
+.row { transition: background-color var(--transition-fast); }
+.row:hover { background: rgba(79,70,229,.035); }
+.cell { padding: 16px; font-size: 14px; vertical-align: middle; color: var(--color-text); border-bottom: 1px solid var(--color-border); }
+.row:last-child .cell { border-bottom: 0; }
+.date { white-space: nowrap; font-size: 13px; color: var(--color-text-secondary); }
+.category { display: inline-flex; align-items: center; padding: 5px 9px; font-size: 12px; font-weight: 600; color: var(--color-text); background: var(--color-background); border-radius: 999px; }
+.comment { max-width: 280px; overflow: hidden; color: var(--color-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.amount { font-weight: 700; text-align: right; white-space: nowrap; }
+.income { color: var(--color-income); }
+.expense { color: var(--color-expense); }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--spacing-xs); }
+.actionButton { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; font-size: 15px; color: var(--color-text-secondary); background: transparent; border: 0; border-radius: var(--radius-small); transition: color var(--transition-fast), background-color var(--transition-fast); }
+.actionButton:hover { color: var(--color-primary); background: rgba(79,70,229,.08); }
+.deleteButton:hover { color: var(--color-expense); background: rgba(220,38,38,.08); }
+.actionButton:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+@media (max-width: 768px) { .headerCell, .cell { padding: 13px 12px; } .table { min-width: 650px; } }

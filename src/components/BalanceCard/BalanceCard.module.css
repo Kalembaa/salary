@@ -1,0 +1,5 @@
+.card { position: relative; overflow: hidden; padding: 22px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-large); box-shadow: var(--shadow-small); }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--card-color); }
+.title { margin: 0 0 10px; color: var(--color-text-secondary); font-size: 14px; font-weight: 600; }
+.amount { margin: 0; color: var(--card-color); font-size: clamp(24px, 3vw, 32px); font-weight: 800; }
+.caption { margin: 8px 0 0; color: var(--color-text-secondary); font-size: 12px; }
