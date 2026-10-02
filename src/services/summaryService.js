@@ -1,46 +1,110 @@
-import { getAllIncomes } from './incomeService.js'
-import { getAllExpenses } from './expenseService.js'
+import {
+  getSummary as getSummaryApi,
+  getSummaryByCategory,
+  getSummaryByMonth,
+} from '../api/salaryApi.js';
 
-const safe = (data) => Array.isArray(data) ? data : []
-const amount = (value) => Number.isFinite(Number(value)) ? Number(value) : 0
-export const calculateTotal = (transactions = []) => safe(transactions).reduce((sum, item) => sum + amount(item?.amount), 0)
-export const getTotalIncome = (incomes = null) => calculateTotal(incomes === null ? getAllIncomes() : incomes)
-export const getTotalExpense = (expenses = null) => calculateTotal(expenses === null ? getAllExpenses() : expenses)
-export const getBalance = (incomes = null, expenses = null) => getTotalIncome(incomes) - getTotalExpense(expenses)
-export const getSummary = (incomes = null, expenses = null) => {
-  const totalIncome = getTotalIncome(incomes), totalExpense = getTotalExpense(expenses)
-  return { totalIncome, totalExpense, balance: totalIncome - totalExpense }
-}
-export const groupByCategory = (transactions = []) => Object.values(safe(transactions).reduce((result, item) => {
-  const key = item?.category || 'other'
-  if (!result[key]) result[key] = { id: key, name: item?.categoryLabel || 'Без категории', value: 0 }
-  result[key].value += amount(item?.amount)
-  return result
-}, {})).filter((item) => item.value > 0).sort((a,b) => b.value - a.value)
-export const getIncomeByCategory = (incomes = null) => groupByCategory(incomes === null ? getAllIncomes() : incomes)
-export const getExpenseByCategory = (expenses = null) => groupByCategory(expenses === null ? getAllExpenses() : expenses)
+// Безопасно преобразуем значение в массив
+const safe = (data) => (Array.isArray(data) ? data : []);
 
-const monthKey = (date) => {
-  const d = new Date(date)
-  if (!date || Number.isNaN(d.getTime())) return null
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+// Безопасно преобразуем сумму в число
+const amount = (value) =>
+  Number.isFinite(Number(value)) ? Number(value) : 0;
+
+// Считаем общую сумму переданных операций
+export const calculateTotal = (transactions = []) =>
+  safe(transactions).reduce(
+    (sum, item) => sum + amount(item?.amount),
+    0
+  );
+
+// Считаем доходы из уже загруженного массива
+export const getTotalIncome = (incomes = []) =>
+  calculateTotal(incomes);
+
+// Считаем расходы из уже загруженного массива
+export const getTotalExpense = (expenses = []) =>
+  calculateTotal(expenses);
+
+// Считаем баланс из уже загруженных массивов
+export const getBalance = (incomes = [], expenses = []) =>
+  getTotalIncome(incomes) - getTotalExpense(expenses);
+
+// Получаем основную сводку напрямую из backend
+export async function getSummary() {
+  return getSummaryApi();
 }
-const monthLabel = (key) => {
-  const [year, month] = key.split('-')
-  return new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' }).format(new Date(Number(year), Number(month)-1, 1))
+
+// Группируем уже загруженные операции по категориям
+export const groupByCategory = (transactions = []) =>
+  Object.values(
+    safe(transactions).reduce((result, item) => {
+      const key = item?.category || 'other';
+
+      if (!result[key]) {
+        result[key] = {
+          id: key,
+          name: item?.categoryLabel || 'Без категории',
+          value: 0,
+        };
+      }
+
+      result[key].value += amount(item?.amount);
+
+      return result;
+    }, {})
+  )
+    .filter((item) => item.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+// Группируем доходы по категориям
+export const getIncomeByCategory = (incomes = []) =>
+  groupByCategory(incomes);
+
+// Группируем расходы по категориям
+export const getExpenseByCategory = (expenses = []) =>
+  groupByCategory(expenses);
+
+// Получаем сводку категорий непосредственно из backend
+export async function getCategorySummary() {
+  return getSummaryByCategory();
 }
-export const getMonthlySummary = (incomes = null, expenses = null) => {
-  const result = {}
-  const apply = (items, field) => safe(items).forEach((item) => {
-    const key = monthKey(item?.date); if (!key) return
-    if (!result[key]) result[key] = { monthKey: key, month: monthLabel(key), income: 0, expense: 0 }
-    result[key][field] += amount(item?.amount)
-  })
-  apply(incomes === null ? getAllIncomes() : incomes, 'income')
-  apply(expenses === null ? getAllExpenses() : expenses, 'expense')
-  return Object.values(result).sort((a,b) => a.monthKey.localeCompare(b.monthKey))
+
+// Формируем подпись месяца
+function monthLabel(key) {
+  const [year, month] = key.split('-');
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    month: 'short',
+    year: 'numeric',
+  }).format(
+    new Date(Number(year), Number(month) - 1, 1)
+  );
 }
-export const getAllTransactions = (incomes = null, expenses = null) => [
-  ...safe(incomes === null ? getAllIncomes() : incomes),
-  ...safe(expenses === null ? getAllExpenses() : expenses),
-].sort((a,b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime())
+
+// Получаем месячную статистику из backend
+export async function getMonthlySummary() {
+  const rows = await getSummaryByMonth();
+
+  return rows.map((item) => ({
+    monthKey: item.month,
+    month: monthLabel(item.month),
+    income: amount(item.totalIncome),
+    expense: amount(item.totalExpense),
+    balance: amount(item.balance),
+  }));
+}
+
+// Объединяем уже загруженные доходы и расходы
+export const getAllTransactions = (
+  incomes = [],
+  expenses = []
+) =>
+  [
+    ...safe(incomes),
+    ...safe(expenses),
+  ].sort(
+    (a, b) =>
+      new Date(b?.date || 0).getTime() -
+      new Date(a?.date || 0).getTime()
+  );

@@ -1,62 +1,237 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BalanceCard from '../../components/BalanceCard/BalanceCard.jsx'
 import Modal from '../../components/Modal/Modal.jsx'
 import TransactionForm from '../../components/TransactionForm/TransactionForm.jsx'
 import TransactionList from '../../components/TransactionList/TransactionList.jsx'
-import { addIncome, deleteIncome, getAllIncomes, updateIncome } from '../../services/incomeService.js'
-import { addExpense, deleteExpense, getAllExpenses, updateExpense } from '../../services/expenseService.js'
-import { getAllTransactions, getSummary } from '../../services/summaryService.js'
+import {
+  addIncome,
+  deleteIncome,
+  getAllIncomes,
+  updateIncome,
+} from '../../services/incomeService.js'
+import {
+  addExpense,
+  deleteExpense,
+  getAllExpenses,
+  updateExpense,
+} from '../../services/expenseService.js'
+import {
+  getAllTransactions,
+  getTotalIncome,
+  getTotalExpense,
+} from '../../services/summaryService.js'
 import styles from './Dashboard.module.css'
 
 function Dashboard() {
-  const [incomes, setIncomes] = useState(() => getAllIncomes())
-  const [expenses, setExpenses] = useState(() => getAllExpenses())
+  const [incomes, setIncomes] = useState([])
+  const [expenses, setExpenses] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const summary = getSummary(incomes, expenses)
-  const recentTransactions = getAllTransactions(incomes, expenses).slice(0, 5)
-  const refreshData = () => { setIncomes(getAllIncomes()); setExpenses(getAllExpenses()) }
-  const closeModal = () => { setIsModalOpen(false); setEditingTransaction(null) }
+  // Загружаем доходы и расходы из backend
+  const refreshData = async () => {
+    try {
+      setError('')
 
-  const handleSubmit = (data) => {
-    if (!data) return
-    if (editingTransaction?.id) {
-      if (editingTransaction.type === data.type) {
-        data.type === 'income' ? updateIncome(editingTransaction.id, data) : updateExpense(editingTransaction.id, data)
-      } else {
-        editingTransaction.type === 'income' ? deleteIncome(editingTransaction.id) : deleteExpense(editingTransaction.id)
-        data.type === 'income' ? addIncome(data) : addExpense(data)
-      }
-    } else {
-      data.type === 'income' ? addIncome(data) : addExpense(data)
+      const [incomeData, expenseData] = await Promise.all([
+        getAllIncomes(),
+        getAllExpenses(),
+      ])
+
+      setIncomes(incomeData)
+      setExpenses(expenseData)
+    } catch (err) {
+      console.error(err)
+      setError('Не удалось загрузить данные с сервера.')
+    } finally {
+      setIsLoading(false)
     }
-    refreshData(); closeModal()
   }
 
-  const handleDelete = (transaction) => {
-    if (!transaction?.id || !window.confirm('Удалить эту операцию?')) return
-    transaction.type === 'income' ? deleteIncome(transaction.id) : deleteExpense(transaction.id)
+  // Загружаем данные при открытии страницы
+  useEffect(() => {
     refreshData()
+  }, [])
+
+  const totalIncome = getTotalIncome(incomes)
+  const totalExpense = getTotalExpense(expenses)
+
+  const summary = {
+    totalIncome,
+    totalExpense,
+    balance: totalIncome - totalExpense,
+  }
+
+  const recentTransactions = getAllTransactions(
+    incomes,
+    expenses
+  ).slice(0, 5)
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setEditingTransaction(null)
+  }
+
+  // Добавляем или редактируем операцию
+  const handleSubmit = async (data) => {
+    if (!data) return
+
+    try {
+      setError('')
+
+      if (editingTransaction?.id) {
+        if (editingTransaction.type === data.type) {
+          if (data.type === 'income') {
+            await updateIncome(editingTransaction.id, data)
+          } else {
+            await updateExpense(editingTransaction.id, data)
+          }
+        } else {
+          if (editingTransaction.type === 'income') {
+            await deleteIncome(editingTransaction.id)
+          } else {
+            await deleteExpense(editingTransaction.id)
+          }
+
+          if (data.type === 'income') {
+            await addIncome(data)
+          } else {
+            await addExpense(data)
+          }
+        }
+      } else {
+        if (data.type === 'income') {
+          await addIncome(data)
+        } else {
+          await addExpense(data)
+        }
+      }
+
+      await refreshData()
+      closeModal()
+    } catch (err) {
+      console.error(err)
+      setError('Не удалось сохранить операцию.')
+    }
+  }
+
+  // Удаляем операцию
+  const handleDelete = async (transaction) => {
+    if (
+      !transaction?.id ||
+      !window.confirm('Удалить эту операцию?')
+    ) {
+      return
+    }
+
+    try {
+      setError('')
+
+      if (transaction.type === 'income') {
+        await deleteIncome(transaction.id)
+      } else {
+        await deleteExpense(transaction.id)
+      }
+
+      await refreshData()
+    } catch (err) {
+      console.error(err)
+      setError('Не удалось удалить операцию.')
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <section className={styles.dashboard}>
+        <p>Загрузка данных...</p>
+      </section>
+    )
   }
 
   return (
     <section className={styles.dashboard}>
       <div className={styles.heading}>
-        <div><h1 className={styles.title}>Обзор финансов</h1><p className={styles.subtitle}>Контролируйте доходы, расходы и текущий баланс.</p></div>
-        <button className={styles.addButton} type="button" onClick={() => { setEditingTransaction(null); setIsModalOpen(true) }}>+ Добавить операцию</button>
+        <div>
+          <h1 className={styles.title}>Обзор финансов</h1>
+          <p className={styles.subtitle}>
+            Контролируйте доходы, расходы и текущий баланс.
+          </p>
+        </div>
+
+        <button
+          className={styles.addButton}
+          type="button"
+          onClick={() => {
+            setEditingTransaction(null)
+            setIsModalOpen(true)
+          }}
+        >
+          + Добавить операцию
+        </button>
       </div>
+
+      {error && <p>{error}</p>}
+
       <div className={styles.cards}>
-        <BalanceCard title="Текущий баланс" amount={summary.balance} color="var(--color-balance)" caption="Доходы минус расходы" />
-        <BalanceCard title="Доходы" amount={summary.totalIncome} color="var(--color-income)" caption="Всего получено" />
-        <BalanceCard title="Расходы" amount={summary.totalExpense} color="var(--color-expense)" caption="Всего потрачено" />
+        <BalanceCard
+          title="Текущий баланс"
+          amount={summary.balance}
+          color="var(--color-balance)"
+          caption="Доходы минус расходы"
+        />
+
+        <BalanceCard
+          title="Доходы"
+          amount={summary.totalIncome}
+          color="var(--color-income)"
+          caption="Всего получено"
+        />
+
+        <BalanceCard
+          title="Расходы"
+          amount={summary.totalExpense}
+          color="var(--color-expense)"
+          caption="Всего потрачено"
+        />
       </div>
+
       <div className={styles.transactionsSection}>
-        <div className={styles.sectionHeader}><h2 className={styles.sectionTitle}>Последние операции</h2><p className={styles.sectionDescription}>Пять последних доходов и расходов.</p></div>
-        <TransactionList transactions={recentTransactions} onEdit={(item) => { setEditingTransaction(item); setIsModalOpen(true) }} onDelete={handleDelete} />
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            Последние операции
+          </h2>
+
+          <p className={styles.sectionDescription}>
+            Пять последних доходов и расходов.
+          </p>
+        </div>
+
+        <TransactionList
+          transactions={recentTransactions}
+          onEdit={(item) => {
+            setEditingTransaction(item)
+            setIsModalOpen(true)
+          }}
+          onDelete={handleDelete}
+        />
       </div>
-      <Modal isOpen={isModalOpen} title={editingTransaction ? 'Редактирование операции' : 'Новая операция'} onClose={closeModal}>
-        <TransactionForm editData={editingTransaction} onSubmit={handleSubmit} onCancel={closeModal} />
+
+      <Modal
+        isOpen={isModalOpen}
+        title={
+          editingTransaction
+            ? 'Редактирование операции'
+            : 'Новая операция'
+        }
+        onClose={closeModal}
+      >
+        <TransactionForm
+          editData={editingTransaction}
+          onSubmit={handleSubmit}
+          onCancel={closeModal}
+        />
       </Modal>
     </section>
   )

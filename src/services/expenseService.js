@@ -1,17 +1,78 @@
-import { getExpenses, saveExpenses } from './storage.js'
-const createId = () => typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `expense-${Date.now()}-${Math.random().toString(16).slice(2)}`
-export const getAllExpenses = () => getExpenses()
-export const getExpenseById = (id = '') => getAllExpenses().find((item) => item?.id === id) ?? null
-export const addExpense = (data = {}) => {
-  const item = { id: createId(), type: 'expense', category: data.category || 'other', categoryLabel: data.categoryLabel || 'Прочее', amount: Number(data.amount ?? 0), date: data.date || new Date().toISOString().split('T')[0], comment: data.comment?.trim() || '', createdAt: new Date().toISOString() }
-  saveExpenses([...getAllExpenses(), item]); return item
+import {
+  getExpenses,
+  createExpense,
+  updateExpense as updateExpenseApi,
+  deleteExpense as deleteExpenseApi,
+} from '../api/salaryApi.js';
+
+import { EXPENSE_CATEGORIES } from '../utils/constants.js';
+
+// Добавляем данные, необходимые существующему интерфейсу
+function mapExpense(expense) {
+  if (!expense) {
+    return null;
+  }
+
+  const category = EXPENSE_CATEGORIES.find(
+    (item) => item.id === expense.category
+  );
+
+  return {
+    ...expense,
+    type: 'expense',
+    categoryLabel: category?.label || 'Прочее',
+    amount: Number(expense.amount),
+    isRecurring: Boolean(expense.isRecurring),
+  };
 }
-export const updateExpense = (id = '', data = {}) => {
-  const current = getExpenseById(id); if (!current) return null
-  const updated = { ...current, ...data, id: current.id, type: 'expense', amount: Number(data.amount ?? current.amount ?? 0), updatedAt: new Date().toISOString() }
-  saveExpenses(getAllExpenses().map((item) => item.id === id ? updated : item)); return updated
+
+// Получаем все расходы из backend
+export async function getAllExpenses() {
+  const result = await getExpenses();
+
+  return result.data.map(mapExpense);
 }
-export const deleteExpense = (id = '') => {
-  if (!getExpenseById(id)) return false
-  saveExpenses(getAllExpenses().filter((item) => item.id !== id)); return true
+
+// Получаем один расход по ID
+export async function getExpenseById(id = '') {
+  const expenses = await getAllExpenses();
+
+  return expenses.find((item) => item.id === id) ?? null;
+}
+
+// Добавляем расход в SQLite через backend
+export async function addExpense(data = {}) {
+  const expense = await createExpense({
+    amount: Number(data.amount ?? 0),
+    date:
+      data.date ||
+      new Date().toISOString().split('T')[0],
+    category: data.category || 'other',
+    comment: data.comment?.trim() || '',
+    isRecurring: Boolean(data.isRecurring),
+  });
+
+  return mapExpense(expense);
+}
+
+// Обновляем расход в SQLite
+export async function updateExpense(id = '', data = {}) {
+  const expense = await updateExpenseApi(id, {
+    amount: Number(data.amount ?? 0),
+    date:
+      data.date ||
+      new Date().toISOString().split('T')[0],
+    category: data.category || 'other',
+    comment: data.comment?.trim() || '',
+    isRecurring: Boolean(data.isRecurring),
+  });
+
+  return mapExpense(expense);
+}
+
+// Удаляем расход из SQLite
+export async function deleteExpense(id = '') {
+  await deleteExpenseApi(id);
+
+  return true;
 }
