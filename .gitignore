@@ -1,0 +1,28 @@
+# Зависимости
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Переменные окружения
+.env
+.env.*
+!.env.example
+
+# Сборка
+dist/
+client/dist/
+
+# Логи
+*.log
+npm-debug.log*
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Временные файлы
+*.tmp
+*.temp
