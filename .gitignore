@@ -12,6 +12,11 @@ server/node_modules/
 dist/
 client/dist/
 
+# Локальная база данных
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
 # Логи
 *.log
 npm-debug.log*
