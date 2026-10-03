@@ -1,15 +1,39 @@
 import {
+  useEffect,
+  useState,
+} from 'react'
+import {
   NavLink,
   useNavigate,
 } from 'react-router-dom'
-import { logout } from '../../services/authService.js'
+import {
+  getCurrentUser,
+  logout,
+} from '../../services/authService.js'
 import styles from './Header.module.css'
 
 function Header() {
   const navigate = useNavigate()
+  const [user, setUser] = useState(null)
 
   const getLinkClass = ({ isActive }) =>
     `${styles.link} ${isActive ? styles.active : ''}`
+
+  useEffect(() => {
+    async function loadCurrentUser() {
+      try {
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+      } catch (error) {
+        console.error(
+          'Не удалось загрузить пользователя:',
+          error
+        )
+      }
+    }
+
+    loadCurrentUser()
+  }, [])
 
   function handleLogout() {
     logout()
@@ -51,6 +75,12 @@ function Header() {
           >
             Аналитика
           </NavLink>
+
+          {user && (
+            <span className={styles.userName}>
+              {user.name}
+            </span>
+          )}
 
           <button
             type="button"

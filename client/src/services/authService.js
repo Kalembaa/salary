@@ -1,4 +1,5 @@
 import {
+  get,
   post,
   setAuthToken,
   removeAuthToken,
@@ -49,6 +50,13 @@ export async function login({
   }
 
   return authData
+}
+
+// Получаем данные текущего пользователя
+export async function getCurrentUser() {
+  const response = await get('/api/v1/auth/me')
+
+  return response.data
 }
 
 // Выход из аккаунта

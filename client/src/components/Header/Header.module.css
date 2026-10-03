@@ -18,6 +18,7 @@
 }
 
 .logo {
+  flex-shrink: 0;
   font-size: 20px;
   font-weight: 800;
   color: var(--color-primary);
@@ -48,6 +49,16 @@
   color: var(--color-primary);
 }
 
+.userName {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .logoutButton {
   padding: 9px 12px;
   border: 0;
@@ -76,5 +87,9 @@
   .nav {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .userName {
+    margin-left: 4px;
   }
 }
