@@ -1,6 +1,7 @@
 import {
   get,
   post,
+  put,
   setAuthToken,
   removeAuthToken,
   getAuthToken,
@@ -55,6 +56,22 @@ export async function login({
 // Получаем данные текущего пользователя
 export async function getCurrentUser() {
   const response = await get('/api/v1/auth/me')
+
+  return response.data
+}
+
+// Изменяем имя и email текущего пользователя
+export async function updateProfile({
+  name,
+  email,
+}) {
+  const response = await put(
+    '/api/v1/auth/me',
+    {
+      name,
+      email,
+    }
+  )
 
   return response.data
 }

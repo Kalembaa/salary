@@ -84,3 +84,44 @@ export function getCurrentUser(req, res) {
     })
   }
 }
+
+// Изменение имени и email текущего пользователя
+export function updateProfile(req, res) {
+  try {
+    const user = authService.updateProfile(
+      req.user.id,
+      req.body
+    )
+
+    return res.status(200).json({
+      data: user,
+    })
+  } catch (error) {
+    if (error.code === 'VALIDATION_ERROR') {
+      return res.status(400).json({
+        error: error.message,
+      })
+    }
+
+    if (error.code === 'EMAIL_ALREADY_EXISTS') {
+      return res.status(409).json({
+        error: error.message,
+      })
+    }
+
+    if (error.code === 'USER_NOT_FOUND') {
+      return res.status(404).json({
+        error: error.message,
+      })
+    }
+
+    console.error(
+      'Ошибка обновления профиля:',
+      error
+    )
+
+    return res.status(500).json({
+      error: 'Не удалось обновить профиль',
+    })
+  }
+}

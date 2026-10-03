@@ -32,7 +32,24 @@ function Header() {
       }
     }
 
+    // Обновляем пользователя после изменения профиля
+    function handleProfileUpdated(event) {
+      setUser(event.detail)
+    }
+
     loadCurrentUser()
+
+    window.addEventListener(
+      'profile-updated',
+      handleProfileUpdated
+    )
+
+    return () => {
+      window.removeEventListener(
+        'profile-updated',
+        handleProfileUpdated
+      )
+    }
   }, [])
 
   function handleLogout() {
@@ -77,9 +94,19 @@ function Header() {
           </NavLink>
 
           {user && (
-            <span className={styles.userName}>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `${styles.userName} ${
+                  isActive
+                    ? styles.userNameActive
+                    : ''
+                }`
+              }
+              title="Открыть профиль"
+            >
               {user.name}
-            </span>
+            </NavLink>
           )}
 
           <button

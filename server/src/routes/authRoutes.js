@@ -3,6 +3,7 @@ import {
   register,
   login,
   getCurrentUser,
+  updateProfile,
 } from '../controllers/authController.js'
 import { requireAuth } from '../middleware/authMiddleware.js'
 
@@ -16,5 +17,8 @@ router.post('/login', login)
 
 // Получение текущего авторизованного пользователя
 router.get('/me', requireAuth, getCurrentUser)
+
+// Изменение профиля текущего пользователя
+router.put('/me', requireAuth, updateProfile)
 
 export default router

@@ -1,4 +1,4 @@
-import db from '../db/connection.js';
+import db from '../db/connection.js'
 
 // Ищем пользователя по email
 export function findByEmail(email) {
@@ -11,9 +11,9 @@ export function findByEmail(email) {
       created_at
     FROM users
     WHERE email = ?
-  `);
+  `)
 
-  return statement.get(email);
+  return statement.get(email)
 }
 
 // Ищем пользователя по ID
@@ -26,9 +26,9 @@ export function findById(id) {
       created_at
     FROM users
     WHERE id = ?
-  `);
+  `)
 
-  return statement.get(id);
+  return statement.get(id)
 }
 
 // Создаём нового пользователя
@@ -44,13 +44,38 @@ export function createUser({
       password_hash
     )
     VALUES (?, ?, ?)
-  `);
+  `)
 
   const result = statement.run(
     name,
     email,
     passwordHash
-  );
+  )
 
-  return findById(result.lastInsertRowid);
+  return findById(result.lastInsertRowid)
+}
+
+// Обновляем имя и email пользователя
+export function updateUser(
+  id,
+  {
+    name,
+    email,
+  }
+) {
+  const statement = db.prepare(`
+    UPDATE users
+    SET
+      name = ?,
+      email = ?
+    WHERE id = ?
+  `)
+
+  statement.run(
+    name,
+    email,
+    id
+  )
+
+  return findById(id)
 }
